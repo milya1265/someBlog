@@ -20,14 +20,15 @@ func CreateNewComment(database *sql.DB) gin.HandlerFunc {
 		newCom.Time = time.Now()
 
 		var err error
-		newCom.PostID, err = strconv.Atoi(idPost)
+		newCom.IdPost, err = strconv.Atoi(idPost)
 
 		if err != nil {
 			log.Println("Error with convert to int ", err)
 			c.Abort() // Вставить ошибку
 			return
 		}
-		newCom.Author = c.Keys["user"].(pkg.User).Name
+
+		newCom.Author = c.Keys["userId"].(int)
 
 		if err = c.BindJSON(newCom); err != nil {
 			log.Println("Error with bind JSON comment ", err)

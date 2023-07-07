@@ -23,9 +23,9 @@ func PasswordEquality(hashPassword string, password string) bool {
 }
 
 func InsertUser(user *pkg.User, db *sql.DB) (int, error) {
-	query := "INSERT INTO users (name, password) VALUES ($1, $2) RETURNING id;"
+	query := "INSERT INTO users (name, surname, email, password) VALUES ($1, $2, $3, $4) RETURNING id;"
 
-	row := db.QueryRow(query, user.Name, user.Password)
+	row := db.QueryRow(query, user.Name, user.Surname, user.Email, user.Password)
 
 	var idNewUser int
 
@@ -37,22 +37,20 @@ func InsertUser(user *pkg.User, db *sql.DB) (int, error) {
 	return idNewUser, nil
 }
 
-func FetchUser(user *pkg.User, db *sql.DB) *pkg.User {
-	query := "SELECT * FROM users WHERE name = $1;"
+func CheckPasswordAndReturnUser(user *pkg.User, db *sql.DB) *pkg.User {
+	query := "SELECT * FROM users WHERE email = $1;"
 
-	log.Println(user.Name)
-
-	row := db.QueryRow(query, user.Name)
+	row := db.QueryRow(query, user.Email)
 
 	var uDB pkg.User
 
-	if err := row.Scan(&uDB.Id, &uDB.Name, &uDB.Password); err != nil {
-		log.Println(uDB.Name, uDB.Password)
+	if err := row.Scan(&uDB.Id, &uDB.Name, &uDB.Surname, &uDB.Email, &uDB.Password); err != nil {
 		log.Println("Error with scan row:", err)
 		return nil
 	}
+	log.Println(uDB.Email, uDB.Password)
 
-	if uDB.Name == user.Name && PasswordEquality(uDB.Password, user.Password) {
+	if uDB.Email == user.Email && PasswordEquality(uDB.Password, user.Password) {
 		return &uDB
 	} else {
 		return nil
@@ -66,7 +64,7 @@ func SearchUserByID(idUser int, db *sql.DB) *pkg.User {
 
 	var u pkg.User
 
-	if err := row.Scan(&u.Id, &u.Name, &u.Password); err != nil {
+	if err := row.Scan(&u.Id, &u.Name, &u.Surname, &u.Email, &u.Password); err != nil {
 		log.Println("Error with scan row:", err)
 		return nil
 	}
@@ -77,11 +75,11 @@ func SearchUserByID(idUser int, db *sql.DB) *pkg.User {
 func SearchUserByName(nameUser string, db *sql.DB) *pkg.User {
 	query := "SELECT * FROM users WHERE name = $1;"
 
-	row := db.QueryRowContext(context.Background(), query, nameUser)
+	row := db.QueryRow(query, nameUser)
 
 	var u pkg.User
 
-	if err := row.Scan(&u.Id, &u.Name, &u.Password); err != nil {
+	if err := row.Scan(&u.Id, &u.Name, &u.Surname, &u.Email, &u.Password); err != nil {
 		log.Println("Error with scan row:", err)
 		return nil
 	}

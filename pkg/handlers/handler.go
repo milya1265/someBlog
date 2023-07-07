@@ -20,7 +20,7 @@ func InitRoutes(db *db.DB) *gin.Engine {
 		blog.POST("/post", auth2.Authorize(db.DataBase), blog2.CreateNewPost(db.DataBase))
 		blog.GET("/post", auth2.Authorize(db.DataBase), blog2.GetPost(db.DataBase))
 		blog.POST("/:idPost/comment", auth2.Authorize(db.DataBase), blog2.CreateNewComment(db.DataBase))
-		blog.GET("/:username/posts", auth2.Authorize(db.DataBase), blog2.GetUserPosts(db.DataBase))
+		blog.GET("/:id/posts", auth2.Authorize(db.DataBase), blog2.GetUserPosts(db.DataBase))
 	}
 	return router
 }

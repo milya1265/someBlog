@@ -17,15 +17,15 @@ func CreateNewPost(database *sql.DB) gin.HandlerFunc {
 
 		if err := c.BindJSON(&newPost); err != nil {
 			log.Println("Error with bind JSON post: ", err)
-			c.Abort() // вставить ошибку
+			c.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
-		newPost.Author = c.Keys["user"].(pkg.User).Id
+		newPost.Author = c.Keys["userId"].(int)
 		newPost.Time = time.Now()
 
 		if err := blog.InsertPost(&newPost, database); err != nil {
 			log.Println("Error with insert post to db:", err)
-			c.Abort() // вставить ошибку
+			c.AbortWithStatus(http.StatusNotImplemented)
 			return
 		}
 
@@ -52,7 +52,7 @@ func GetPost(database *sql.DB) gin.HandlerFunc {
 		}
 
 		if post != nil {
-			c.JSON(http.StatusIMUsed, gin.H{"post": post})
+			c.JSON(http.StatusOK, gin.H{"post": post})
 		} else {
 			log.Println("Post ID is not found")
 			c.AbortWithStatus(http.StatusInternalServerError)
@@ -63,15 +63,18 @@ func GetPost(database *sql.DB) gin.HandlerFunc {
 
 func GetUserPosts(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		username := c.Param("username")
-
-		posts, err := blog.FetchUserPosts(username, db)
+		userId, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			log.Println("Error with convert postID to int ", err)
+			c.AbortWithStatus(http.StatusBadRequest)
+		}
+		posts, err := blog.FetchUserPosts(userId, db)
 		if err != nil {
 			log.Println("Error with get posts from db", err)
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"user": username, "posts": *posts})
+		c.JSON(http.StatusOK, gin.H{"user": userId, "posts": *posts})
 	}
 }

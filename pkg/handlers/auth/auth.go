@@ -53,7 +53,7 @@ func SignIn(database *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		u = db2.FetchUser(u, database)
+		u = db2.CheckPasswordAndReturnUser(u, database)
 		if u == nil {
 			log.Println("User not found in database")
 			c.JSON(http.StatusNotFound, gin.H{"message": "Invalid username or password"})
@@ -63,7 +63,7 @@ func SignIn(database *sql.DB) gin.HandlerFunc {
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 			"sub": u.Id,
-			"exp": time.Now().Add(time.Minute * 10).Unix(),
+			"exp": time.Now().Add(time.Minute * 60).Unix(),
 		})
 
 		tokenString, err := token.SignedString(JWTKey)
@@ -78,7 +78,7 @@ func SignIn(database *sql.DB) gin.HandlerFunc {
 		c.SetSameSite(http.SameSiteLaxMode)
 		c.SetCookie("Authorization", tokenString, 3600*24*30, "", "", false, true)
 		c.JSON(http.StatusOK, gin.H{
-			"user": u.Name,
+			"user": u.Id,
 		})
 
 	}
@@ -117,7 +117,7 @@ func Authorize(database *sql.DB) gin.HandlerFunc {
 				return
 			}
 
-			c.Set("user", *user)
+			c.Set("userId", user.Id)
 			c.Next()
 		} else {
 			log.Println("Validation error")

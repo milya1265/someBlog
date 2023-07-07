@@ -7,13 +7,15 @@ import (
 type User struct {
 	Id       int    `json:"id"`
 	Name     string `json:"name"`
+	Surname  string `json:"surname"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
 type Comment struct {
 	Id     int       `json:"id"`
-	Author string    `json:"author"`
-	PostID int       `json:"post_id"`
+	Author int       `json:"author"`
+	IdPost int       `json:"idPost"`
 	Time   time.Time `json:"time"`
 	Body   string    `json:"body"`
 }

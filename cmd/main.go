@@ -19,7 +19,7 @@ func main() {
 	}
 
 	var serv server.Server
-	serv.Srv = handlers.InitRoutes(&database)
+	serv.Srv = *handlers.InitRoutes(&database)
 	serv.Start("localhost:8080") // исправить хардкод порта
 
 }

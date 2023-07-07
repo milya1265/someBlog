@@ -13,13 +13,13 @@ import (
 // Invoke-WebRequest -Uri "http://localhost:8080/newUser" -Method POST -Body '{"name":"Egor","age":12}' -Headers @{"Content-Type"="application/json"}
 
 func main() {
-	db := db.DB{}
-	if err := db.Open("postgres://dmilya:qwerty@localhost:5432/BlogDB?sslmode=disable"); err != nil {
+	database := db.DB{}
+	if err := database.Open("postgres://dmilya:qwerty@localhost:5432/BlogDB?sslmode=disable"); err != nil {
 		log.Fatalln("Error with open database", err)
 	}
 
 	var serv server.Server
-	serv.Srv = handlers.InitRoutes(&db)
+	serv.Srv = handlers.InitRoutes(&database)
 	serv.Start("localhost:8080") // исправить хардкод порта
 
 }

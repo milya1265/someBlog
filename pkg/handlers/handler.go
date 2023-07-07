@@ -7,7 +7,7 @@ import (
 	blog2 "someBlog/pkg/handlers/blog"
 )
 
-func InitRoutes(db *db.DB) gin.Engine {
+func InitRoutes(db *db.DB) *gin.Engine {
 	router := gin.Default()
 
 	auth := router.Group("/auth")
@@ -22,5 +22,5 @@ func InitRoutes(db *db.DB) gin.Engine {
 		blog.POST("/:idPost/comment", auth2.Authorize(db.DataBase), blog2.CreateNewComment(db.DataBase))
 		blog.GET("/:username/posts", auth2.Authorize(db.DataBase), blog2.GetUserPosts(db.DataBase))
 	}
-	return *router
+	return router
 }

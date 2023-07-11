@@ -32,6 +32,5 @@ type Post struct {
 	Id     int       `json:"id"`
 	Author int       `json:"author"`
 	Time   time.Time `json:"time"`
-	Name   string    `json:"name"`
 	Body   string    `json:"body"`
 }

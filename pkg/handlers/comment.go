@@ -1,12 +1,12 @@
-package blog
+package handlers
 
 import (
 	"database/sql"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
-	"someBlog/db/blog"
 	"someBlog/pkg"
+	"someBlog/pkg/repository"
 	"strconv"
 	"time"
 )
@@ -38,7 +38,7 @@ func CreateNewComment(database *sql.DB) gin.HandlerFunc {
 		//Проверить , что забиндилось только тело комментария
 		log.Println(*newCom)
 
-		if err = blog.InsertNewComment(newCom, database); err != nil {
+		if err = repository.InsertNewComment(newCom, database); err != nil {
 			log.Println("Error with insert new comment", err)
 			c.Abort() // вставить ошибку
 			return

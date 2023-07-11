@@ -1,4 +1,4 @@
-package auth
+package handlers
 
 import (
 	"database/sql"
@@ -6,8 +6,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"log"
 	"net/http"
-	db2 "someBlog/db/auth"
 	"someBlog/pkg"
+	db2 "someBlog/pkg/repository"
 	"time"
 )
 
@@ -110,9 +110,9 @@ func Authorize(database *sql.DB) gin.HandlerFunc {
 			}
 
 			user := &pkg.User{}
-			user = db2.SearchUserByID(int(claims["sub"].(float64)), database)
+			user, err = db2.SearchUserByID(int(claims["sub"].(float64)), database)
 			if user == nil {
-				log.Println("User not found")
+				log.Println("User not found", err)
 				c.AbortWithStatus(http.StatusUnauthorized)
 				return
 			}

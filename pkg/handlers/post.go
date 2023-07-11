@@ -1,12 +1,12 @@
-package blog
+package handlers
 
 import (
 	"database/sql"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
-	"someBlog/db/blog"
 	"someBlog/pkg"
+	"someBlog/pkg/repository"
 	"strconv"
 	"time"
 )
@@ -23,7 +23,7 @@ func CreateNewPost(database *sql.DB) gin.HandlerFunc {
 		newPost.Author = c.Keys["userId"].(int)
 		newPost.Time = time.Now()
 
-		if err := blog.InsertPost(&newPost, database); err != nil {
+		if err := repository.InsertPost(&newPost, database); err != nil {
 			log.Println("Error with insert post to db:", err)
 			c.AbortWithStatus(http.StatusNotImplemented)
 			return
@@ -44,7 +44,7 @@ func GetPost(database *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		post, err := blog.FetchPostByID(idPost, database)
+		post, err := repository.SearchPostByID(idPost, database)
 		if err != nil {
 			log.Println("Error with select post:", err)
 			c.AbortWithStatus(http.StatusInternalServerError)
@@ -68,13 +68,17 @@ func GetUserPosts(db *sql.DB) gin.HandlerFunc {
 			log.Println("Error with convert postID to int ", err)
 			c.AbortWithStatus(http.StatusBadRequest)
 		}
-		posts, err := blog.FetchUserPosts(userId, db)
+		posts, err := repository.ReturnUserPosts(userId, db)
 		if err != nil {
 			log.Println("Error with get posts from db", err)
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"user": userId, "posts": *posts})
+		c.JSON(http.StatusOK, gin.H{"user": userId, "posts": posts})
 	}
 }
+
+//func EditPost(db *sql.DB) gin.HandlerFunc {
+//
+//}

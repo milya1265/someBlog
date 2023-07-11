@@ -1,7 +1,6 @@
-package auth
+package repository
 
 import (
-	"context"
 	"database/sql"
 	"golang.org/x/crypto/bcrypt"
 	"log"
@@ -55,34 +54,4 @@ func CheckPasswordAndReturnUser(user *pkg.User, db *sql.DB) *pkg.User {
 	} else {
 		return nil
 	}
-}
-
-func SearchUserByID(idUser int, db *sql.DB) *pkg.User {
-	query := "SELECT * FROM users WHERE id = $1;"
-
-	row := db.QueryRowContext(context.Background(), query, idUser)
-
-	var u pkg.User
-
-	if err := row.Scan(&u.Id, &u.Name, &u.Surname, &u.Email, &u.Password); err != nil {
-		log.Println("Error with scan row:", err)
-		return nil
-	}
-
-	return &u
-}
-
-func SearchUserByName(nameUser string, db *sql.DB) *pkg.User {
-	query := "SELECT * FROM users WHERE name = $1;"
-
-	row := db.QueryRow(query, nameUser)
-
-	var u pkg.User
-
-	if err := row.Scan(&u.Id, &u.Name, &u.Surname, &u.Email, &u.Password); err != nil {
-		log.Println("Error with scan row:", err)
-		return nil
-	}
-
-	return &u
 }

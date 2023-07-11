@@ -1,4 +1,4 @@
-package blog
+package repository
 
 import (
 	"database/sql"
@@ -8,7 +8,7 @@ import (
 func InsertPost(newPost *pkg.Post, db *sql.DB) error {
 	query := "INSERT INTO posts (author, time, name, body) VALUES ($1, $2, $3, $4);"
 
-	_, err := db.Exec(query, newPost.Author, newPost.Time, newPost.Name, newPost.Body)
+	_, err := db.Exec(query, newPost.Author, newPost.Time, newPost.Body)
 	if err != nil {
 		return err
 	}
@@ -16,14 +16,14 @@ func InsertPost(newPost *pkg.Post, db *sql.DB) error {
 	return nil
 }
 
-func FetchPostByID(idPost int, db *sql.DB) (*pkg.Post, error) {
+func SearchPostByID(idPost int, db *sql.DB) (*pkg.Post, error) {
 	query := "SELECT * FROM posts WHERE id = $1"
 
 	res := db.QueryRow(query, idPost)
 
 	postDB := &pkg.Post{}
 
-	err := res.Scan(&postDB.Id, &postDB.Author, &postDB.Time, &postDB.Name, &postDB.Body)
+	err := res.Scan(&postDB.Id, &postDB.Author, &postDB.Time, &postDB.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -31,8 +31,10 @@ func FetchPostByID(idPost int, db *sql.DB) (*pkg.Post, error) {
 	return postDB, nil
 }
 
-func FetchUserPosts(userId int, db *sql.DB) (*[]pkg.Post, error) {
+func ReturnUserPosts(userId int, db *sql.DB) ([]pkg.Post, error) {
 	query := "SELECT * FROM posts WHERE author = $1;"
+
+	posts := []pkg.Post{}
 
 	res, err := db.Query(query, userId)
 	if err != nil {
@@ -41,18 +43,18 @@ func FetchUserPosts(userId int, db *sql.DB) (*[]pkg.Post, error) {
 
 	defer res.Close()
 
-	posts := &[]pkg.Post{}
-
 	for res.Next() {
 		var post pkg.Post
-		if err = res.Scan(&post.Id, &post.Author, &post.Time, &post.Name, &post.Body); err != nil {
+		if err = res.Scan(&post.Id, &post.Author, &post.Time, &post.Body); err != nil {
 			return nil, err
 		}
-		*posts = append(*posts, post)
+		posts = append(posts, post)
 	}
+
 	if err = res.Err(); err != nil {
 		return nil, err
 	}
+
 	return posts, nil
 
 }

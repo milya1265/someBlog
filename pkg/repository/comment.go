@@ -1,4 +1,4 @@
-package blog
+package repository
 
 import (
 	"database/sql"

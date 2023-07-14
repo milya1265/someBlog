@@ -1,21 +1,20 @@
-package handlers
+package auth
 
 import (
-	"database/sql"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"log"
 	"net/http"
-	"someBlog/pkg"
-	db2 "someBlog/pkg/repository"
+
+	user2 "someBlog/internal/domain/user"
 	"time"
 )
 
 var JWTKey = []byte("lolkekcheburek")
 
-func SignUp(database *sql.DB) gin.HandlerFunc {
+func (h *handler) SignUp() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var newUser pkg.User
+		var newUser user2.User
 
 		if err := c.BindJSON(&newUser); err != nil {
 			log.Println("Error input with bind JSON:", err)
@@ -24,13 +23,13 @@ func SignUp(database *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		if err := db2.HashPassword(&newUser); err != nil {
+		if err := HashPassword(&newUser); err != nil {
 			c.JSON(http.StatusInternalServerError, err)
 			c.Abort()
 			return
 		}
 
-		idNewUser, err := db2.InsertUser(&newUser, database)
+		idNewUser, err := h.Service.SignUp(&newUser)
 		if err != nil {
 			log.Println("Error with insert to database", err)
 			c.JSON(http.StatusNotImplemented, err)
@@ -43,9 +42,9 @@ func SignUp(database *sql.DB) gin.HandlerFunc {
 	}
 }
 
-func SignIn(database *sql.DB) gin.HandlerFunc {
+func (h *handler) SignIn() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		u := &pkg.User{}
+		u := &user2.User{}
 
 		if err := c.BindJSON(u); err != nil {
 			log.Println("Error with bind JSON:", err)
@@ -53,7 +52,7 @@ func SignIn(database *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		u = db2.CheckPasswordAndReturnUser(u, database)
+		u = h.Service.SignIn(u)
 		if u == nil {
 			log.Println("User not found in database")
 			c.JSON(http.StatusNotFound, gin.H{"message": "Invalid username or password"})
@@ -84,7 +83,7 @@ func SignIn(database *sql.DB) gin.HandlerFunc {
 	}
 }
 
-func Authorize(database *sql.DB) gin.HandlerFunc {
+func (h *handler) Authorize() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString, err := c.Cookie("Authorization")
 		if err != nil {
@@ -109,8 +108,8 @@ func Authorize(database *sql.DB) gin.HandlerFunc {
 				return
 			}
 
-			user := &pkg.User{}
-			user, err = db2.SearchUserByID(int(claims["sub"].(float64)), database)
+			user := &user2.User{}
+			user, err = h.Service.GetUser(int(claims["sub"].(float64)))
 			if user == nil {
 				log.Println("User not found", err)
 				c.AbortWithStatus(http.StatusUnauthorized)

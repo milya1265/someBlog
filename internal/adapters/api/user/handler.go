@@ -1,15 +1,13 @@
-package handlers
+package user
 
 import (
-	"database/sql"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
-	"someBlog/pkg/repository"
 	"strconv"
 )
 
-func GetUser(db *sql.DB) gin.HandlerFunc {
+func (h *handler) GetUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uID, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
@@ -17,7 +15,7 @@ func GetUser(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		user, err := repository.SearchUserByID(uID, db)
+		user, err := h.Service.GetUser(uID)
 		if user == nil {
 			c.JSON(http.StatusNotFound, gin.H{"message": "User is not found", "error": err})
 			return
@@ -29,7 +27,7 @@ func GetUser(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
-func Subscribe(db *sql.DB) gin.HandlerFunc {
+func (h *handler) Subscribe() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		profileId, err := strconv.Atoi(c.Request.URL.Query().Get("id"))
 		if err != nil {
@@ -46,7 +44,7 @@ func Subscribe(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		if err = repository.NewSubscribe(subID, profileId, db); err != nil {
+		if err = h.Service.Subscribe(subID, profileId); err != nil {
 			log.Println("Error with create new subscribe", err)
 			c.AbortWithStatus(http.StatusNotImplemented)
 			return
@@ -56,7 +54,7 @@ func Subscribe(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
-func Unsubscribe(db *sql.DB) gin.HandlerFunc {
+func (h *handler) Unsubscribe() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		profileId, err := strconv.Atoi(c.Request.URL.Query().Get("id"))
 		if err != nil {
@@ -73,7 +71,7 @@ func Unsubscribe(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		if err = repository.DeleteSubscribe(subID, profileId, db); err != nil {
+		if err = h.Service.Unsubscribe(subID, profileId); err != nil {
 			log.Println("Error with  unsubscribe", err)
 			c.AbortWithStatus(http.StatusNotImplemented)
 			return

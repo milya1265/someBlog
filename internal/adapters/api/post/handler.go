@@ -1,19 +1,17 @@
-package handlers
+package post
 
 import (
-	"database/sql"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
-	"someBlog/pkg"
-	"someBlog/pkg/repository"
+	"someBlog/internal/domain/post"
 	"strconv"
 	"time"
 )
 
-func CreateNewPost(database *sql.DB) gin.HandlerFunc {
+func (h *handler) CreateNewPost() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var newPost pkg.Post
+		var newPost post.Post
 
 		if err := c.BindJSON(&newPost); err != nil {
 			log.Println("Error with bind JSON post: ", err)
@@ -23,7 +21,7 @@ func CreateNewPost(database *sql.DB) gin.HandlerFunc {
 		newPost.Author = c.Keys["userId"].(int)
 		newPost.Time = time.Now()
 
-		if err := repository.InsertPost(&newPost, database); err != nil {
+		if err := h.Service.Create(&newPost); err != nil {
 			log.Println("Error with insert post to db:", err)
 			c.AbortWithStatus(http.StatusNotImplemented)
 			return
@@ -35,7 +33,7 @@ func CreateNewPost(database *sql.DB) gin.HandlerFunc {
 
 }
 
-func GetPost(database *sql.DB) gin.HandlerFunc {
+func (h *handler) GetPost() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idPost, err := strconv.Atoi(c.Request.URL.Query().Get("id"))
 		if err != nil {
@@ -44,7 +42,7 @@ func GetPost(database *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		post, err := repository.SearchPostByID(idPost, database)
+		post, err := h.Service.GetByID(idPost)
 		if err != nil {
 			log.Println("Error with select post:", err)
 			c.AbortWithStatus(http.StatusInternalServerError)
@@ -61,14 +59,14 @@ func GetPost(database *sql.DB) gin.HandlerFunc {
 	}
 }
 
-func GetUserPosts(db *sql.DB) gin.HandlerFunc {
+func (h *handler) GetUserPosts() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userId, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			log.Println("Error with convert postID to int ", err)
 			c.AbortWithStatus(http.StatusBadRequest)
 		}
-		posts, err := repository.ReturnUserPosts(userId, db)
+		posts, err := h.Service.GetUserPosts(userId)
 		if err != nil {
 			log.Println("Error with get posts from db", err)
 			c.AbortWithStatus(http.StatusInternalServerError)
@@ -76,6 +74,38 @@ func GetUserPosts(db *sql.DB) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{"user": userId, "posts": posts})
+	}
+}
+
+func (h *handler) CreateFeed() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userId := c.Keys["userId"].(int)
+		numPosts := 1
+
+		if c.Request.URL.Query().Get("num") != "" {
+			var err error
+			numPosts, err = strconv.Atoi(c.Request.URL.Query().Get("num"))
+			if err != nil {
+				log.Println(c.Request.URL.Query().Get("num"))
+				log.Println("Error with get num of feed", err)
+				c.AbortWithStatus(http.StatusBadRequest)
+				return
+			}
+		}
+
+		if numPosts == 1 {
+		}
+		numTenPost := (numPosts - 1) * 10
+
+		posts, err := h.Service.CreateFeed(userId, numTenPost)
+		if err != nil {
+			log.Println("Error with returning posts from db:", err)
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"post": posts})
+
 	}
 }
 

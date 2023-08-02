@@ -10,8 +10,6 @@ import (
 	"time"
 )
 
-var JWTKey = []byte("lolkekcheburek")
-
 func (h *handler) SignUp() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var newUser user2.User
@@ -65,7 +63,7 @@ func (h *handler) SignIn() gin.HandlerFunc {
 			"exp": time.Now().Add(time.Minute * 60).Unix(),
 		})
 
-		tokenString, err := token.SignedString(JWTKey)
+		tokenString, err := token.SignedString(h.Config.JWTKey)
 
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -88,12 +86,12 @@ func (h *handler) Authorize() gin.HandlerFunc {
 		tokenString, err := c.Cookie("Authorization")
 		if err != nil {
 			log.Println("Error with read cookie:", err)
-			c.Abort()
+			c.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
 
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			return JWTKey, nil
+			return h.Config.JWTKey, nil
 		})
 		if err != nil {
 			log.Println("Error with parse token: ", err)

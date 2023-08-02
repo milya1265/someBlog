@@ -6,10 +6,12 @@ import (
 )
 
 type Handler interface {
-	CreateNewPost() gin.HandlerFunc
-	GetPost() gin.HandlerFunc
+	Create() gin.HandlerFunc
+	Get() gin.HandlerFunc
+	Edit() gin.HandlerFunc
 	GetUserPosts() gin.HandlerFunc
 	CreateFeed() gin.HandlerFunc
+	Delete() gin.HandlerFunc
 }
 
 type handler struct {

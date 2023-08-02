@@ -3,6 +3,7 @@ package main
 import (
 	_ "github.com/lib/pq"
 	"log"
+	"someBlog/configs"
 	auth2 "someBlog/internal/adapters/api/auth"
 	comment2 "someBlog/internal/adapters/api/comment"
 	post2 "someBlog/internal/adapters/api/post"
@@ -13,7 +14,7 @@ import (
 	"someBlog/internal/domain/comment"
 	"someBlog/internal/domain/post"
 	"someBlog/internal/domain/user"
-	"someBlog/pkg/repository"
+	"someBlog/pkg/postgreSQL"
 )
 
 // docker run --name BlogDB -p 5432:5432 -e POSTGRES_USER=dmilya -e POSTGRES_PASSWORD=qwerty -e POSTGRES_DB=BlogDB -d postgres:13.3
@@ -21,25 +22,28 @@ import (
 // Invoke-WebRequest -Uri "http://localhost:8080/newUser" -Method POST -Body '{"name":"Egor","age":12}' -Headers @{"Content-Type"="application/json"}
 
 func main() {
-	repos := repository.Repository{}
-	DB, err := repos.Open("postgres://dmilya:qwerty@localhost:5432/BlogDB?sslmode=disable")
+	repos := postgreSQL.Repository{}
+
+	cfg := configs.GetConfig()
+
+	DB, err := repos.Open(*cfg)
 	if err != nil {
 		log.Fatalln("Error with open database", err)
 	}
 
 	authStorage := auth.NewStorage(DB)
 	authService := auth.NewService(&authStorage)
-	authHandlers := auth2.NewHandler(&authService)
+	authHandlers := auth2.NewHandler(&authService, cfg)
 
-	userStorage := user.NewStorage(DB)
+	userStorage := user.NewRepository(DB)
 	userService := user.NewService(&userStorage)
 	userHandlers := user2.NewHandler(&userService)
 
-	postStorage := post.NewStorage(DB)
+	postStorage := post.NewRepository(DB)
 	postService := post.NewService(&postStorage)
 	postHandlers := post2.NewHandler(&postService)
 
-	commentStorage := comment.NewStorage(DB)
+	commentStorage := comment.NewRepository(DB)
 	commentService := comment.NewService(&commentStorage)
 	commentHandlers := comment2.NewHandler(&commentService)
 

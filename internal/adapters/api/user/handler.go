@@ -7,15 +7,15 @@ import (
 	"strconv"
 )
 
-func (h *handler) GetUser() gin.HandlerFunc {
+func (h *handler) Get() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		uID, err := strconv.Atoi(c.Param("id"))
+		uID, err := strconv.Atoi(c.Param("idUser"))
 		if err != nil {
 			c.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
 
-		user, err := h.Service.GetUser(uID)
+		user, err := h.Service.Get(uID)
 		if user == nil {
 			c.JSON(http.StatusNotFound, gin.H{"message": "User is not found", "error": err})
 			return
@@ -29,7 +29,7 @@ func (h *handler) GetUser() gin.HandlerFunc {
 
 func (h *handler) Subscribe() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		profileId, err := strconv.Atoi(c.Request.URL.Query().Get("id"))
+		profileId, err := strconv.Atoi(c.Param("userId"))
 		if err != nil {
 			log.Println("Error with get key from context")
 			c.AbortWithStatus(http.StatusBadRequest)
@@ -56,7 +56,7 @@ func (h *handler) Subscribe() gin.HandlerFunc {
 
 func (h *handler) Unsubscribe() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		profileId, err := strconv.Atoi(c.Request.URL.Query().Get("id"))
+		profileId, err := strconv.Atoi(c.Param("userId"))
 		if err != nil {
 			log.Println("Error with get key from context")
 			c.AbortWithStatus(http.StatusBadRequest)
@@ -78,5 +78,59 @@ func (h *handler) Unsubscribe() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{"message": "You're unsubscribed"})
+	}
+}
+
+func (h *handler) EditProfile() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		userId := c.Keys["userId"].(int)
+
+		dtoUser := &struct {
+			name    string `json:"name"`
+			surname string `json:"surname"`
+		}{}
+
+		var response []byte
+		_, err := c.Request.Body.Read(response)
+
+		log.Println(response)
+
+		if err != nil {
+			log.Println("Error with read JSON", err)
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		if err := c.BindJSON(dtoUser); err != nil {
+			log.Println("Error with bind JSON", err)
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		log.Println(dtoUser)
+
+		if err := h.Service.EditUser(userId, dtoUser.name, dtoUser.surname); err != nil {
+			log.Println("Error with edit profile", err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Profile is changed"})
+	}
+}
+
+func (h *handler) Delete() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		userId := c.Keys["userId"].(int)
+
+		if err := h.Service.Delete(userId); err != nil {
+			log.Println("Error with deleting user", err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Profile is deleted"})
 	}
 }

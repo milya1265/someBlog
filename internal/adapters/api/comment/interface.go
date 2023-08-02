@@ -6,7 +6,11 @@ import (
 )
 
 type Handler interface {
-	CreateNewComment() gin.HandlerFunc
+	Create() gin.HandlerFunc
+	Get() gin.HandlerFunc
+	GetPostComment() gin.HandlerFunc
+	Edit() gin.HandlerFunc
+	Delete() gin.HandlerFunc
 }
 
 type handler struct {

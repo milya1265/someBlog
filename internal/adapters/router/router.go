@@ -8,7 +8,8 @@ import (
 	"someBlog/internal/adapters/api/user"
 )
 
-func InitRoutes(authHandler auth.Handler, userHandler user.Handler, postHandler post.Handler, comHandler comment.Handler) *gin.Engine {
+func InitRoutes(authHandler auth.Handler, userHandler user.Handler, postHandler post.Handler,
+	comHandler comment.Handler) *gin.Engine {
 	router := gin.Default()
 
 	auth := router.Group("/auth")
@@ -18,17 +19,36 @@ func InitRoutes(authHandler auth.Handler, userHandler user.Handler, postHandler 
 	}
 	blog := router.Group("/blog")
 	{
-		blog.POST("/post", authHandler.Authorize(), postHandler.CreateNewPost())
-		blog.GET("/post", authHandler.Authorize(), postHandler.GetPost())
-		blog.POST("/post/:idPost/comment", authHandler.Authorize(), comHandler.CreateNewComment())
+		post := blog.Group("/post")
+		{
+			post.POST("", authHandler.Authorize(), postHandler.Create())
+			post.GET("/:idPost", authHandler.Authorize(), postHandler.Get())
+			post.PUT("/:idPost", authHandler.Authorize(), postHandler.Edit())
+			post.DELETE("/:idPost", authHandler.Authorize(), postHandler.Delete())
+
+			post.POST("/:idPost/comment", authHandler.Authorize(), comHandler.Create())
+			post.GET("/:idPost/comment", authHandler.Authorize(), comHandler.GetPostComment())
+
+			post.GET("/comment/:idCom", authHandler.Authorize(), comHandler.Get())
+			post.PUT("/comment/:idCom", authHandler.Authorize(), comHandler.Edit())
+			post.DELETE("/comment/:idCom", authHandler.Authorize(), comHandler.Delete())
+
+		}
+
 		blog.GET("/feed", authHandler.Authorize(), postHandler.CreateFeed())
+		blog.GET("/feed/:page", authHandler.Authorize(), postHandler.CreateFeed())
 	}
 	user := router.Group("/user")
+
 	{
-		user.GET("/:id", authHandler.Authorize(), userHandler.GetUser())
-		user.GET("/:id/posts", authHandler.Authorize(), postHandler.GetUserPosts())
-		user.POST("/sub", authHandler.Authorize(), userHandler.Subscribe())
-		user.DELETE("/unsub", authHandler.Authorize(), userHandler.Unsubscribe())
+		user.GET("/:idUser", authHandler.Authorize(), userHandler.Get())
+		user.PATCH("", authHandler.Authorize(), userHandler.EditProfile())
+		user.DELETE("", authHandler.Authorize(), userHandler.Delete())
+
+		user.GET("/:idUser/posts", authHandler.Authorize(), postHandler.GetUserPosts())
+
+		user.POST("/sub/:userId", authHandler.Authorize(), userHandler.Subscribe())
+		user.DELETE("/unsub/:userId", authHandler.Authorize(), userHandler.Unsubscribe())
 	}
 	return router
 }

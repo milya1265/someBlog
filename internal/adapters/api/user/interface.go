@@ -6,9 +6,11 @@ import (
 )
 
 type Handler interface {
-	GetUser() gin.HandlerFunc
+	Get() gin.HandlerFunc
 	Subscribe() gin.HandlerFunc
 	Unsubscribe() gin.HandlerFunc
+	EditProfile() gin.HandlerFunc
+	Delete() gin.HandlerFunc
 }
 
 type handler struct {

@@ -9,21 +9,51 @@ import (
 	"time"
 )
 
-func (h *handler) CreateNewPost() gin.HandlerFunc {
+func (h *handler) Get() gin.HandlerFunc {
+	log.Println("INFO --> starting get post handler")
+
+	return func(c *gin.Context) {
+		idPost, err := strconv.Atoi(c.Param("idPost"))
+		if err != nil {
+			log.Println("ERROR --> parse URI", err)
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		post, err := h.Service.GetByID(idPost)
+		if err != nil {
+			log.Println("ERROR --> select post:", err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		if post != nil {
+			c.JSON(http.StatusOK, gin.H{"post": post})
+		} else {
+			log.Println("Post ID is not found")
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+
+	}
+}
+
+func (h *handler) Create() gin.HandlerFunc {
+	log.Println("INFO --> starting create post handler")
+
 	return func(c *gin.Context) {
 		var newPost post.Post
 
 		if err := c.BindJSON(&newPost); err != nil {
-			log.Println("Error with bind JSON post: ", err)
-			c.AbortWithStatus(http.StatusBadRequest)
+			log.Println("ERROR --> bind JSON post: ", err)
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 		newPost.Author = c.Keys["userId"].(int)
 		newPost.Time = time.Now()
 
 		if err := h.Service.Create(&newPost); err != nil {
-			log.Println("Error with insert post to db:", err)
-			c.AbortWithStatus(http.StatusNotImplemented)
+			log.Println("ERROR --> insert post to db:", err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
@@ -33,43 +63,19 @@ func (h *handler) CreateNewPost() gin.HandlerFunc {
 
 }
 
-func (h *handler) GetPost() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		idPost, err := strconv.Atoi(c.Request.URL.Query().Get("id"))
-		if err != nil {
-			log.Println("Error with parse URI", err)
-			c.AbortWithStatus(http.StatusBadRequest)
-			return
-		}
-
-		post, err := h.Service.GetByID(idPost)
-		if err != nil {
-			log.Println("Error with select post:", err)
-			c.AbortWithStatus(http.StatusInternalServerError)
-			return
-		}
-
-		if post != nil {
-			c.JSON(http.StatusOK, gin.H{"post": post})
-		} else {
-			log.Println("Post ID is not found")
-			c.AbortWithStatus(http.StatusInternalServerError)
-		}
-
-	}
-}
-
 func (h *handler) GetUserPosts() gin.HandlerFunc {
+	log.Println("INFO --> starting get user posts handler")
+
 	return func(c *gin.Context) {
-		userId, err := strconv.Atoi(c.Param("id"))
+		userId, err := strconv.Atoi(c.Param("idUser"))
 		if err != nil {
-			log.Println("Error with convert postID to int ", err)
-			c.AbortWithStatus(http.StatusBadRequest)
+			log.Println("ERROR --> convert postID to int ", err)
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		}
 		posts, err := h.Service.GetUserPosts(userId)
 		if err != nil {
-			log.Println("Error with get posts from db", err)
-			c.AbortWithStatus(http.StatusInternalServerError)
+			log.Println("ERROR --> get posts from db", err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
@@ -78,29 +84,29 @@ func (h *handler) GetUserPosts() gin.HandlerFunc {
 }
 
 func (h *handler) CreateFeed() gin.HandlerFunc {
+	log.Println("INFO --> starting create feed handler")
+
 	return func(c *gin.Context) {
 		userId := c.Keys["userId"].(int)
-		numPosts := 1
+		var numPosts = 1
 
-		if c.Request.URL.Query().Get("num") != "" {
+		if c.Param("page") != "" {
 			var err error
-			numPosts, err = strconv.Atoi(c.Request.URL.Query().Get("num"))
+			numPosts, err = strconv.Atoi(c.Param("page"))
 			if err != nil {
 				log.Println(c.Request.URL.Query().Get("num"))
-				log.Println("Error with get num of feed", err)
-				c.AbortWithStatus(http.StatusBadRequest)
+				log.Println("ERROR --> get num of feed", err)
+				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 				return
 			}
 		}
 
-		if numPosts == 1 {
-		}
 		numTenPost := (numPosts - 1) * 10
 
 		posts, err := h.Service.CreateFeed(userId, numTenPost)
 		if err != nil {
-			log.Println("Error with returning posts from db:", err)
-			c.AbortWithStatus(http.StatusInternalServerError)
+			log.Println("ERROR --> returning posts from db:", err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
@@ -109,6 +115,57 @@ func (h *handler) CreateFeed() gin.HandlerFunc {
 	}
 }
 
-//func EditPost(db *sql.DB) gin.HandlerFunc {
-//
-//}
+func (h *handler) Edit() gin.HandlerFunc {
+	log.Println("INFO --> starting edit post handler")
+
+	return func(c *gin.Context) {
+		var Post post.Post
+
+		if err := c.BindJSON(&Post); err != nil {
+			log.Println("ERROR --> bind JSON post: ", err)
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		idPost, err := strconv.Atoi(c.Param("idPost"))
+		if err != nil {
+			log.Println("ERROR --> convert to int: ", err)
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		idUser := c.Keys["userId"].(int)
+
+		if err = h.Service.Edit(idPost, idUser, Post.Body); err != nil {
+			log.Println("ERROR --> edit post:", err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Post has been edited"})
+
+	}
+}
+
+func (h *handler) Delete() gin.HandlerFunc {
+	log.Println("INFO --> starting delete post handler")
+
+	return func(c *gin.Context) {
+		idPost, err := strconv.Atoi(c.Param("idPost"))
+		if err != nil {
+			log.Println("ERROR --> convert to int: ", err)
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		idUser := c.Keys["userId"].(int)
+
+		if err = h.Service.Delete(idPost, idUser); err != nil {
+			log.Println("ERROR --> insert delete:", err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Post has been deleted"})
+
+	}
+}

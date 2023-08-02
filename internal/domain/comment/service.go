@@ -1,21 +1,21 @@
 package comment
 
-type Service interface {
-	Create(com *Comment) error
-	Delete(idCom int) error
+func (s *service) Get(idСom int) (*Comment, error) {
+	return s.repository.Get(idСom)
 }
 
-type service struct {
-	storage Storage
+func (s *service) Create(com *Comment) (int, error) {
+	return s.repository.InsertNewComment(com)
 }
 
-func NewService(storage *Storage) Service {
-	return &service{storage: *storage}
+func (s *service) Edit(idCom, userId int, newBody string) error {
+	return s.repository.ChangeBody(idCom, userId, newBody)
 }
 
-func (s *service) Create(com *Comment) error {
-	return s.storage.InsertNewComment(com)
+func (s *service) Delete(idCom, authorId int) error {
+	return s.repository.Delete(idCom, authorId)
 }
-func (s *service) Delete(idCom int) error {
-	return s.storage.Delete(idCom)
+
+func (s *service) GetPostComment(idPost int) ([]Comment, error) {
+	return s.repository.GetPostComment(idPost)
 }

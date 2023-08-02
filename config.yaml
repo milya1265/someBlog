@@ -1,0 +1,12 @@
+serv:
+  port: localhost:8080
+storage:
+  dbDriver: postgres
+  host: localhost
+  port: 5432
+  database: BlogDB
+  username: dmilya
+  password: qwerty
+  sslmode: disable
+JWTkey: lolkekcheburek
+

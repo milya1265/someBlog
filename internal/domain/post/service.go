@@ -1,41 +1,25 @@
 package post
 
-import (
-	"github.com/gin-gonic/gin"
-)
-
-type Service interface {
-	Create(newPost *Post) error
-	CreateFeed(userId, numTenPost int) ([]Post, error)
-	GetByID(idPost int) (*Post, error)
-	GetUserPosts(userId int) ([]Post, error)
-	Delete(ctx gin.Context) error
-}
-
-type service struct {
-	storage Storage
-}
-
-func NewService(storage *Storage) Service {
-	return &service{storage: *storage}
-}
-
 func (s *service) Create(newPost *Post) error {
-	return s.storage.Insert(newPost)
+	return s.repository.Insert(newPost)
 }
 
 func (s *service) GetByID(idPost int) (*Post, error) {
-	return s.storage.SearchPostByID(idPost)
+	return s.repository.SearchPostByID(idPost)
 }
 
 func (s *service) GetUserPosts(userId int) ([]Post, error) {
-	return s.storage.ReturnUserPosts(userId)
+	return s.repository.ReturnUserPosts(userId)
 }
 
-func (s *service) Delete(ctx gin.Context) error {
-	return nil
+func (s *service) Edit(idPost, idUser int, newBody string) error {
+	return s.repository.ChangeBody(idPost, idUser, newBody)
 }
 
 func (s *service) CreateFeed(idSub, numTenPost int) ([]Post, error) {
-	return s.storage.ReturnTenPosts(idSub, numTenPost)
+	return s.repository.ReturnTenPosts(idSub, numTenPost)
+}
+
+func (s *service) Delete(idPost, idUser int) error {
+	return s.repository.Delete(idPost, idUser)
 }

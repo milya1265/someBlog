@@ -7,5 +7,5 @@ type Comment struct {
 	Author int       `json:"author"`
 	IdPost int       `json:"idPost"`
 	Time   time.Time `json:"time"`
-	Body   string    `json:"body"`
+	Body   string    `json:"body" binding:"required"`
 }
